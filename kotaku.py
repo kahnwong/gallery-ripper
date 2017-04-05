@@ -16,11 +16,14 @@ def kotaku_artwork_dl(url):
     plain_text = source_code.text.encode('ascii', 'replace')
     soup = BeautifulSoup(plain_text,'html.parser')
     images = []
-    for image in soup.find_all("img", class_="lazyload ls-lazy-image-tag "):
+    
+    #~ for image in soup.find_all("p", class_="ls-lazy-image-tag cursor-pointer lazyautosizes lazyloaded"):
+    for image in soup.select('img[data-chomp-id]'):
         image_id = image.get('data-chomp-id')
         extension = image.get('data-format')
         images.append(image_id + '.' + extension)
-
+    print(images)
+    
     """Download images"""
     for image in images:
         image_url = 'https://i.kinja-img.com/gawker-media/image/upload/' + image
@@ -29,4 +32,4 @@ def kotaku_artwork_dl(url):
         urllib.request.urlretrieve(image_url, album + '/' + filename)
         print('Download', filename, 'completed')
 
-    print("Download", album, "completed!")
+    print("------Download", album, "completed!------")
