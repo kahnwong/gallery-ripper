@@ -1,7 +1,7 @@
 import boredpanda
 import fubiz
 import kotaku
-import popculturenexus
+# import popculturenexus
 
 def main(urls):
 
