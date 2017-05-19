@@ -1,63 +1,61 @@
-import urllib.request
+import os
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
-import os
 
-def fubiz_dl(url):
-    
-    #~ """Extract images off the page (if exist)"""
-    #~ source_code = requests.get(url, allow_redirects=True)
-    #~ plain_text = source_code.text.encode('ascii', 'replace')
-    #~ soup = BeautifulSoup(plain_text,'html.parser')
-    #~ imgs_off_frontpage = []
-    
-    #~ for link in soup.select('p > img'):
-        #~ data_original = link.get('data-original')
-        #~ imgs_off_frontpage.append(data_original)
-    
+def s(i):
+    source_code = requests.get(i, allow_redirects=True).content
+    soup = BeautifulSoup(source_code, 'html.parser')
+    return soup
 
-    """Extract gallery url"""
-    source_code = requests.get(url, allow_redirects=True)
-    plain_text = source_code.text.encode('ascii', 'replace')
-    soup = BeautifulSoup(plain_text,'html.parser')
-    thumbnail = ''  # if the first soup doesnt work the second one has 
-                    # something to compare to
-    
+def get_thumbnail_url(url):
+    soup = s(url)
     for link in soup.find_all("a", class_="lightbox"):
-        href = link.get('href')
-        thumbnail = href
+        thumbnail = link.get('href') # return all images wrapper url
         break
-    
-    if not thumbnail:
-        thumbnails = []
-        for link in soup.select('p > a'):
-            href = link.get('href')
-            thumbnails.append(href)
-        thumbnail = thumbnails[3]
-        
-    print(thumbnail)
-    
-    """Create dir"""
+
+    try:
+        print(thumbnail)
+        return thumbnail
+    except UnboundLocalError:
+        for scrape in soup.find_all('div', class_='inner-post-content'):
+            for link in scrape.find_all('a'):
+                continue
+            thumbnail = link.get('href')
+            redirect = requests.get(thumbnail)
+            thumbnail = redirect.url
+            print(thumbnail)
+            return thumbnail
+
+def create_dir(thumbnail):
     parsed = urlparse(thumbnail)
     album = parsed.path.split('/')[-3].replace('-', ' ').title()
     os.mkdir(album)
-    
-    """Extract image urls"""
-    source_code = requests.get(thumbnail, allow_redirects=True)
-    plain_text = source_code.text.encode('ascii', 'replace')
-    soup = BeautifulSoup(plain_text,'html.parser')
-    urls = []
-    
-    for link in soup.select('div > img'):
-        src = link.get('src')
-        urls.append(src)
 
-    """Download images"""
-    for url in urls:
-        parsed = urlparse(url)
+    print('====', album, 'created====')
+    return album
+
+def extract_image_urls(thumbnail):
+    soup = s(thumbnail)
+    images = [link.get('src') for link in soup.select('div > img')]
+    print(images)
+    return images
+
+def download(images, album):
+    for image in images:
+        parsed = urlparse(image)
         filename = parsed.path.split('/')[-1]
-        urllib.request.urlretrieve(url, album + '/' + filename)
-        print('Download', filename, 'completed!')
 
-    print("----Download", album, "completed!----")
+        image_b = requests.get(image)
+        with open(album + '/' + filename, 'wb') as img_obj:
+            img_obj.write(image_b.content)
+        print(filename)
+        # break #test
+
+def main(url):
+    thumbnail = get_thumbnail_url(url)
+    images = extract_image_urls(thumbnail)
+    album = create_dir(thumbnail)
+    download(images, album)
+
+    print('----------------')

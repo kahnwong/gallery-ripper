@@ -1,35 +1,48 @@
-import urllib.request
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 import os
 
-def kotaku_artwork_dl(url):
 
-    """Create dir"""
-    parsed = urlparse(url)
-    album = ' '.join(parsed.path.split('-')[:-1]).title().replace('/', '')
-    os.mkdir(album)
+def extract_image_urls(url):
+    source_code = requests.get(url).content
+    soup = BeautifulSoup(source_code, 'html.parser')
 
-    """Extract image urls"""
-    source_code = requests.get(url, allow_redirects=True)
-    plain_text = source_code.text.encode('ascii', 'replace')
-    soup = BeautifulSoup(plain_text,'html.parser')
     images = []
-    
-    #~ for image in soup.find_all("p", class_="ls-lazy-image-tag cursor-pointer lazyautosizes lazyloaded"):
     for image in soup.select('img[data-chomp-id]'):
         image_id = image.get('data-chomp-id')
         extension = image.get('data-format')
         images.append(image_id + '.' + extension)
-    print(images)
-    
-    """Download images"""
-    for image in images:
-        image_url = 'https://i.kinja-img.com/gawker-media/image/upload/' + image
-        parsed = urlparse(image_url)
-        filename = parsed.path.split('/')[-1]
-        urllib.request.urlretrieve(image_url, album + '/' + filename)
-        print('Download', filename, 'completed')
 
-    print("------Download", album, "completed!------")
+    images = ['https://i.kinja-img.com/gawker-media/image/upload/' + image
+              for image in images]
+
+    return images
+
+def create_dir(url):
+    parsed = urlparse(url)
+    album = ' '.join(parsed.path.split('-')[:-1]).title().replace('/', '')
+    os.mkdir(album)
+    print('====', album, 'created====')
+
+    return album
+
+def download(images, album):
+    for image in images:
+        parsed = urlparse(image)
+        filename = parsed.path.split('/')[-1]
+
+        image_b = requests.get(image)
+        with open(album + '/' + filename, 'wb') as img_obj:
+            img_obj.write(image_b.content)
+        print(filename)
+
+def main(url):
+    images = extract_image_urls(url)
+    print(images)
+
+    album = create_dir(url)
+
+    download(images, album)
+
+    print('----------------')
