@@ -36,7 +36,7 @@ class Scraper(object):
             with open(album + '/' + filename, 'wb') as img_obj:
                 img_obj.write(image_b.content)
             print(filename)
-            break #test
+            # break #test
         print('-----------------------------------')
 
 
@@ -79,13 +79,32 @@ class Kotaku(Scraper):
             images.append(image_id + '.' + extension)
 
         images = ['https://i.kinja-img.com/gawker-media/image/upload/' + image for image in images]
-
         return images
 
     def album_name(self):
         parsed = urlparse(self.url)
         album = ' '.join(parsed.path.split('-')[:-1]).title().replace('/', '')
         return album
+
+class Boredpanda(Scraper):
+    def get_images(self):
+        images = []
+        for link in self.soup.select('div > p > img'):
+            src = link.get('src')
+            images.append(src)
+
+        # if len(images) == 0:
+        if not images:
+            for link in self.soup.select('div > p > span > img'):
+                src = link.get('src')
+                images.append(src)
+        return images
+
+    def album_name(self):
+        parsed = urlparse(self.url)
+        album = parsed.path.replace('-', ' ').title().replace('/', '')
+        return album
+
 
 
 def main(filename):
@@ -101,6 +120,11 @@ def main(filename):
             i.download()
         elif 'kotaku' in site:
             i = Kotaku(site)
+            i.make_request()
+            i.download()
+
+        elif 'boredpanda' in site:
+            i = Boredpanda(site)
             i.make_request()
             i.download()
 
