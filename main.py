@@ -23,8 +23,8 @@ def main(urls):
             kotaku.main(album_url)
             break
 
-        if 'popculturenexus' in album_url:
-            popculturenexus.popculturenexus_dl(album_url)
+        # if 'popculturenexus' in album_url:
+        #     popculturenexus.popculturenexus_dl(album_url)
 
 
 main('urls.txt')
