@@ -142,7 +142,6 @@ class Thedieline(Scraper):
 
     def get_images(self):
         if 'feed' in self.url:
-            print('feed')
             response = requests.get(self.url, allow_redirects=True)
             self.url = response.url.split('?')[0]
             print(self.url)
