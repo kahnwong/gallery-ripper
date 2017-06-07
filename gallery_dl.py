@@ -24,7 +24,10 @@ class Scraper(object):
         # raise NotImplementedError
 
         album = self.album_name()
-        os.mkdir(album)
+        try:
+            os.mkdir(album)
+        except FileExistsError:
+            pass
         print('======', album, '======')
         images = self.get_images()
         print(images)
@@ -135,7 +138,16 @@ class Popculturenexus(Scraper):
         return album
 
 class Thedieline(Scraper):
+
+
     def get_images(self):
+        if 'feed' in self.url:
+            print('feed')
+            response = requests.get(self.url, allow_redirects=True)
+            self.url = response.url.split('?')[0]
+            print(self.url)
+
+
         soup = self.make_request()
         images = []
         for scrape in soup.find_all(class_='sqs-layout sqs-grid-12 columns-12'):
