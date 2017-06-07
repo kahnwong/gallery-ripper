@@ -23,14 +23,15 @@ class Scraper(object):
     def download(self):
         # raise NotImplementedError
 
+        images = self.get_images()
+        print(images)
+
         album = self.album_name()
         try:
             os.mkdir(album)
         except FileExistsError:
             pass
         print('======', album, '======')
-        images = self.get_images()
-        print(images)
 
         for index, image in enumerate(images):
             parsed = urlparse(image)
