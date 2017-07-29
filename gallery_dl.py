@@ -71,7 +71,6 @@ class Fubiz(Scraper):
                 print(thumbnail)
                 self.url = thumbnail
 
-
     def get_images(self):
         soup = self.make_request()
         images = [link.get('src') for link in soup.select('div > img')]
@@ -107,7 +106,6 @@ class Boredpanda(Scraper):
             src = link.get('src')
             images.append(src)
 
-        # if len(images) == 0:
         if not images:
             for link in soup.select('div > p > span > img'):
                 src = link.get('src')
@@ -139,14 +137,11 @@ class Popculturenexus(Scraper):
         return album
 
 class Thedieline(Scraper):
-
-
     def get_images(self):
         if 'feed' in self.url:
             response = requests.get(self.url, allow_redirects=True)
             self.url = response.url.split('?')[0]
             print(self.url)
-
 
         soup = self.make_request()
         images = []
@@ -164,11 +159,23 @@ class Thedieline(Scraper):
         album = parsed.path.split('/')[-1].replace('-', ' ').title()
         return album
 
+class HundredNudeShoots(Scraper):
+    def get_images(self):
+        soup = self.make_request()
+        for scrape in soup.find_all('div', class_='entry-content'):
+            images = scrape.find_all('img')
+            images = [chunk.get('data-orig-file') for chunk in images]
+
+        return images
+
+    def album_name(self):
+        parsed = urlparse(self.url)
+        album = parsed.path.split('/')[-2].replace('-', ' ').title()
+        return album
 
 def main(filename):
     with open(filename, 'r') as f:
         sites = [line.strip() for line in f]
-    # print(sites)
 
     for site in sites:
         if 'fubiz' in site:
@@ -189,6 +196,10 @@ def main(filename):
 
         elif 'thedieline' in site:
             i = Thedieline(site)
+            i.download()
+
+        elif '100nudeshoots' in site:
+            i = HundredNudeShoots(site)
             i.download()
 
 main('urls.txt')
