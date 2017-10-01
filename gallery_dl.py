@@ -26,7 +26,7 @@ class Scraper(object):
         # raise NotImplementedError
 
         images = self.get_images()
-        print(images)
+        # print(images)
 
         album = self.album_name()
         try:
@@ -49,14 +49,14 @@ class Scraper(object):
 
             with open(album + '/' + filename, 'wb') as f:
                 pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ) )
-                # pbar.write(filename)
+                pbar.write(filename)
                 for chunk in r.iter_content(chunk_size=chunkSize):
                     if chunk: # filter out keep-alive new chunks
                         pbar.update (len(chunk))
                         f.write(chunk)
 
             # break #test
-        print('-----------------------------------')
+        pbar.write('-----------------------------------')
         time.sleep(2)
 
 
@@ -68,7 +68,7 @@ class Fubiz(Scraper):
             break
 
         try:
-            print(thumbnail)
+            # print(thumbnail)
             self.url = thumbnail
         except UnboundLocalError:
             for scrape in soup.find_all('div', class_='inner-post-content'):
@@ -77,7 +77,7 @@ class Fubiz(Scraper):
                 thumbnail = link.get('href')
                 redirect = requests.get(thumbnail)
                 thumbnail = redirect.url
-                print(thumbnail)
+                # print(thumbnail)
                 self.url = thumbnail
 
     def get_images(self):
@@ -150,14 +150,14 @@ class Thedieline(Scraper):
         if 'feed' in self.url:
             response = requests.get(self.url, allow_redirects=True)
             self.url = response.url.split('?')[0]
-            print(self.url)
+            # print(self.url)
 
         soup = self.make_request()
         images = []
         for scrape in soup.find_all(class_='sqs-layout sqs-grid-12 columns-12'):
             for link in scrape.find_all('img'):
                 img = link.get('src')
-                print(img)
+                # print(img)
                 images.append(img)
 
         images = [img for img in images if img]
