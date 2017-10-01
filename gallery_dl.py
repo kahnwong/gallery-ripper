@@ -33,30 +33,51 @@ class Scraper(object):
             os.mkdir(album)
         except FileExistsError:
             pass
-        print('======', album, '======')
+        # print('======', album, '======')
+        # tqdm.write('======', album, '======')
 
         for index, image in enumerate(images):
             parsed = urlparse(image)
             filename = parsed.path.split('/')[-1]
-            # tqdm.write(filename)
-            # print(filename)
 
-            chunkSize = 1024
-            r = requests.get(image, stream=True)
+            # r = requests.get(image, stream=True)
 
             if '.jpg' not in filename:
                 filename = parsed.path.split('/')[-2] + '.jpg'
 
-            with open(album + '/' + filename, 'wb') as f:
-                pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ) )
-                pbar.write(filename)
-                for chunk in r.iter_content(chunk_size=chunkSize):
-                    if chunk: # filter out keep-alive new chunks
-                        pbar.update (len(chunk))
-                        f.write(chunk)
+            full_path = album + '/' + filename
+
+
+            def download_file(url, full_path, filename):
+                """
+                Helper method handling downloading large files from `url` to `filename`. Returns a pointer to `filename`.
+                """
+                chunkSize = 1024
+                r = requests.get(url, stream=True)
+                with open(full_path, 'wb') as f:
+                    pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ), desc=album + ': ' + filename )
+                    for chunk in r.iter_content(chunk_size=chunkSize):
+                        if chunk: # filter out keep-alive new chunks
+                            pbar.update (len(chunk))
+                            f.write(chunk)
+
+
+                time.sleep(1)
+
+                # return filename
+
+
+            download_file(image, full_path, filename)
+        print('--------------')
+
+
+
+
 
             # break #test
-        pbar.write('-----------------------------------')
+        # pbar.write('-----------------------------------')
+        # print('-----------------------------------')
+
         time.sleep(2)
 
 
@@ -215,3 +236,57 @@ main('urls.txt')
 
 # """enum"""
 # with open(album + '/' + str(index) + ' ' + filename, 'wb') as img_obj:
+
+
+
+##########
+            # total_size = int(r.headers.get('content-length', 0));
+            # total_size = (int(r.headers.get('content-length', 0))/(32*1024))
+            # with open(album + '/' + filename, 'wb') as f:
+            #     for data in tqdm(r.iter_content(32*1024), total=total_size,
+            #                      unit='B', unit_scale=True, desc=album + ': ' + filename):
+            #         f.write(data)
+#########
+
+
+
+
+##################
+            # chunkSize = 1024
+            # with open(filename, 'wb') as f:
+            #     pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ), unit_scale=True )
+            #     pbar.set_description(album + ' ' + str(index))
+
+            #     for chunk in r.iter_content(chunk_size=chunkSize):
+            #         if chunk: # filter out keep-alive new chunks
+            #             pbar.update (len(chunk))
+            #             f.write(chunk)
+#####################
+            # total_size = int(r.headers["Content-Length"])
+            # downloaded = 0  # keep track of size downloaded so far
+            # chunkSize = 1024
+            # bars = int(total_size / chunkSize)
+            #
+            # with open(album + '/' + filename, "wb") as f:
+            #     pbar = tqdm(r.iter_content(chunk_size=chunkSize), total=bars, unit="KB",
+            #                                   desc=filename, leave=True)
+            #     for chunk in r.iter_content(chunk_size=chunkSize):
+            #         f.write(chunk)
+            #         downloaded += chunkSize  # increment the downloaded
+            #         prog = ((downloaded * 100 / total_size))
+            #         pbar.update(prog)  # *100 #Default max value of tkinter progress is 100
+
+
+#######
+            # total_size = int(r.headers["Content-Length"])
+            # # downloaded = 0  # keep track of size downloaded so far
+            # chunkSize = 1024
+            # # bars = int(total_size / chunkSize)
+            #
+            # with open(album + '/' + filename, "wb") as f:
+            #     pbar = tqdm(r.iter_content(chunk_size=chunkSize), total=total_size, unit="B",
+            #                                   desc=filename, leave=True, unit_scale=True)
+            #     for chunk in r.iter_content(chunk_size=chunkSize):
+            #         f.write(chunk)
+            #         pbar.update(len(chunk))  # *100 #Default max value of tkinter progress is 100
+##################
