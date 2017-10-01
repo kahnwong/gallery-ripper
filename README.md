@@ -7,9 +7,12 @@ Paste urls in ```urls.txt``` and run ```gallery_dl.py``` to begin download.
 
 Add support for The Die Line and Popculturenexus
 
+## Update Oct 1, 2017
+
+Add progress bar 
+
 ## Dependencies
 
 ```
-pip install beautifulsoup4
-pip install requests
+pip install beautifulsoup4, requests tqdm
 ```
