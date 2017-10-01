@@ -2,7 +2,9 @@ import os
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
-from time import sleep
+# from time import sleep
+import time
+from tqdm import tqdm
 # import better_exceptions
 
 class Scraper(object):
@@ -36,19 +38,26 @@ class Scraper(object):
         for index, image in enumerate(images):
             parsed = urlparse(image)
             filename = parsed.path.split('/')[-1]
-            image_b = requests.get(image)
+            # tqdm.write(filename)
+            # print(filename)
+
+            chunkSize = 1024
+            r = requests.get(image, stream=True)
 
             if '.jpg' not in filename:
                 filename = parsed.path.split('/')[-2] + '.jpg'
 
+            with open(album + '/' + filename, 'wb') as f:
+                pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ) )
+                # pbar.write(filename)
+                for chunk in r.iter_content(chunk_size=chunkSize):
+                    if chunk: # filter out keep-alive new chunks
+                        pbar.update (len(chunk))
+                        f.write(chunk)
 
-            """no enum"""
-            with open(album + '/' + filename, 'wb') as img_obj:
-                img_obj.write(image_b.content)
-            print(filename)
             # break #test
         print('-----------------------------------')
-        sleep(3)
+        time.sleep(2)
 
 
 class Fubiz(Scraper):
