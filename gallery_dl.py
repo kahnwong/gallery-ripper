@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 # from time import sleep
 import time
 from tqdm import tqdm
+from fake_useragent import UserAgent
 # import better_exceptions
 
 class Scraper(object):
@@ -45,23 +46,34 @@ class Scraper(object):
             full_path = album + '/' + filename
 
             # https://stackoverflow.com/questions/40544123/how-to-use-tqdm-in-python-to-show-progress-when-downloading-data-online
-            def download_file(url, full_path, filename):
-                """
-                Helper method handling downloading large files from `url` to `filename`. Returns a pointer to `filename`.
-                """
-                chunkSize = 1024
-                r = requests.get(url, stream=True)
-                with open(full_path, 'wb') as f:
-                    pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ),
-                                unit_scale=True )
-                    pbar.write(filename)
-                    for chunk in r.iter_content(chunk_size=chunkSize):
-                        if chunk: # filter out keep-alive new chunks
-                            pbar.update(len(chunk))
-                            f.write(chunk)
-                time.sleep(1)
+            # def download_file(url, full_path, filename):
+            #     """
+            #     Helper method handling downloading large files from `url` to `filename`. Returns a pointer to `filename`.
+            #     """
+            #     chunkSize = 1024
+            #
+            #     ua = UserAgent()
+            #     header = {'User-Agent':str(ua.chrome)}
+            #
+            #     r = requests.get(url, stream=True, headers=header)
+            #     with open(full_path, 'wb') as f:
+            #         pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ),
+            #                     unit_scale=True )
+            #         pbar.write(filename)
+            #         for chunk in r.iter_content(chunk_size=chunkSize):
+            #             if chunk: # filter out keep-alive new chunks
+            #                 pbar.update(len(chunk))
+            #                 f.write(chunk)
+            #     time.sleep(1)
 
-            download_file(image, full_path, filename)
+            # download_file(image, full_path, filename)
+            r = requests.get(image)
+            with open(full_path, 'wb') as img_obj:
+                img_obj.write(r.content)
+                print(filename)
+
+
+
         time.sleep(2)
 
 class Fubiz(Scraper):
