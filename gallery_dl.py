@@ -2,11 +2,10 @@ import os
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
-# from time import sleep
-import time
-from tqdm import tqdm
-from fake_useragent import UserAgent
-# import better_exceptions
+from time import sleep
+
+# from tqdm import tqdm
+# from fake_useragent import UserAgent
 
 class Scraper(object):
     def __init__(self, url):
@@ -24,19 +23,16 @@ class Scraper(object):
         raise NotImplementedError
 
     def download(self):
-        # raise NotImplementedError
-
         images = self.get_images()
-        # print(images)
-
         album = self.album_name()
+
         try:
             os.mkdir(album)
         except FileExistsError:
             pass
         print('======', album, '======')
 
-        for index, image in enumerate(images):
+        for image in images:
             parsed = urlparse(image)
             filename = parsed.path.split('/')[-1]
 
@@ -45,36 +41,12 @@ class Scraper(object):
 
             full_path = album + '/' + filename
 
-            # https://stackoverflow.com/questions/40544123/how-to-use-tqdm-in-python-to-show-progress-when-downloading-data-online
-            # def download_file(url, full_path, filename):
-            #     """
-            #     Helper method handling downloading large files from `url` to `filename`. Returns a pointer to `filename`.
-            #     """
-            #     chunkSize = 1024
-            #
-            #     ua = UserAgent()
-            #     header = {'User-Agent':str(ua.chrome)}
-            #
-            #     r = requests.get(url, stream=True, headers=header)
-            #     with open(full_path, 'wb') as f:
-            #         pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ),
-            #                     unit_scale=True )
-            #         pbar.write(filename)
-            #         for chunk in r.iter_content(chunk_size=chunkSize):
-            #             if chunk: # filter out keep-alive new chunks
-            #                 pbar.update(len(chunk))
-            #                 f.write(chunk)
-            #     time.sleep(1)
-
-            # download_file(image, full_path, filename)
             r = requests.get(image)
             with open(full_path, 'wb') as img_obj:
                 img_obj.write(r.content)
                 print(filename)
 
-
-
-        time.sleep(2)
+        sleep(2)
 
 class Fubiz(Scraper):
     def get_thumbnail(self):
@@ -84,7 +56,6 @@ class Fubiz(Scraper):
             break
 
         try:
-            # print(thumbnail)
             self.url = thumbnail
         except UnboundLocalError:
             for scrape in soup.find_all('div', class_='inner-post-content'):
@@ -93,7 +64,6 @@ class Fubiz(Scraper):
                 thumbnail = link.get('href')
                 redirect = requests.get(thumbnail)
                 thumbnail = redirect.url
-                # print(thumbnail)
                 self.url = thumbnail
 
     def get_images(self):
@@ -150,7 +120,6 @@ class Popculturenexus(Scraper):
             try:
                 image = link.get('data-orig-file').split('?')[0]
                 images.append(image)
-                # print(image)
             except AttributeError:
                 pass
 
@@ -166,14 +135,12 @@ class Thedieline(Scraper):
         if 'feed' in self.url:
             response = requests.get(self.url, allow_redirects=True)
             self.url = response.url.split('?')[0]
-            # print(self.url)
 
         soup = self.make_request()
         images = []
         for scrape in soup.find_all(class_='sqs-layout sqs-grid-12 columns-12'):
             for link in scrape.find_all('img'):
                 img = link.get('src')
-                # print(img)
                 images.append(img)
 
         images = [img for img in images if img]
@@ -198,6 +165,23 @@ class HundredNudeShoots(Scraper):
         album = parsed.path.split('/')[-2].replace('-', ' ').title()
         return album
 
+class TheFappening(Scraper):
+    def get_images(self):
+        soup = self.make_request()
+
+        scrape = soup.find('article')
+        images = scrape.find_all('a')
+        images = [image.get('href') for image in images]
+        images = [image for image in images if image]
+        images = [image for image in images if image.endswith('.jpg')]
+
+        return images
+
+    def album_name(self):
+        parsed = urlparse(self.url)
+        album = parsed.path.strip('/').replace('-', ' ').title()
+        return album
+
 def main(filename):
     with open(filename, 'r') as f:
         sites = [line.strip() for line in f]
@@ -207,6 +191,7 @@ def main(filename):
             i = Fubiz(site)
             i.get_thumbnail()
             i.download()
+
         elif 'kotaku' in site:
             i = Kotaku(site)
             i.download()
@@ -227,7 +212,32 @@ def main(filename):
             i = HundredNudeShoots(site)
             i.download()
 
+        elif 'thefappeningblog' in site:
+            i = TheFappening(site)
+            i.download()
+
 main('urls.txt')
 
 # """enum"""
 # with open(album + '/' + str(index) + ' ' + filename, 'wb') as img_obj:
+
+# https://stackoverflow.com/questions/40544123/how-to-use-tqdm-in-python-to-show-progress-when-downloading-data-online
+# def download_file(url, full_path, filename):
+#     """
+#     Helper method handling downloading large files from `url` to `filename`. Returns a pointer to `filename`.
+#     """
+#     chunkSize = 1024
+#
+#     ua = UserAgent()
+#     header = {'User-Agent':str(ua.chrome)}
+#
+#     r = requests.get(url, stream=True, headers=header)
+#     with open(full_path, 'wb') as f:
+#         pbar = tqdm( unit="B", total=int( r.headers['Content-Length'] ),
+#                     unit_scale=True )
+#         pbar.write(filename)
+#         for chunk in r.iter_content(chunk_size=chunkSize):
+#             if chunk: # filter out keep-alive new chunks
+#                 pbar.update(len(chunk))
+#                 f.write(chunk)
+#     time.sleep(1)
